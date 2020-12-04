@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<title>GIS Project</title>
+<html lang="en">
+<head>
+    <!--<link rel="stylesheet" href="gis_projectStyle.css"/>
+    <!--I could also use ISO-8859-1, but if it aint broke...-->
+    <meta charset= "UTF-8">
+    <!--This is a discription-->
+    <meta name="description" content="GIS">
+    <meta name="author" content="Hunter Stokes">
+    <!--Keywords for seach engines in other words, being useless in this context-->
+    <meta name="keywords" content="GIS">
+    <!--Now lets scale the webpage-->
+    <meta name="viewport" content="width=device-width, initial-scale 1.0">
+    <link rel="stylesheet" href="https://js.arcgis.com/4.15/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.15/"></script>
+    <script>
+    //this is a weird work around, but I thought it would be cool to
+    //have the points colors be differnt by elevation, however, their elevation is not in the database
+    //but they are orderd by elevation in database. This is an attemt to change the color by order they come in. 
+    let orderCount= 0;
+
+    require([
+    "esri/Map",
+    "esri/views/MapView",
+    "esri/Graphic",
+    "esri/layers/GraphicsLayer",
+    ], function(Map, MapView, Graphic, GraphicsLayer){
+        let map = new Map({
+            basemap: "hybrid"
+        });
+        let view = new MapView({
+            container: "map",
+            map: map,
+            center: [-118.6836173, 36.4333166],
+            zoom: 7
+        });
+        //now we can add icons
+        let gLayer = new GraphicsLayer();
+        map.add(gLayer);
+
+        let xhttp = new XMLHttpRequest();
+        console.log(xhttp);
+
+    xhttp.onreadystatechange = function(){
+        if (xhttp.readyState === 4 && xhttp.status === 200){
+            let data = JSON.parse(xhttp.responseText);
+            for (feature of data.features){
+                let point = {
+                    type: "point",
+                    longitude: feature.geometry.coordinates[0],
+                    latitude: feature.geometry.coordinates[1]
+                };
+
+                //This chnages the color by order in the json file, like abotu, this is a 
+                // way to shw the tallest by
+
+                let orderColor;
+                if (orderCount < 10)
+                {
+                    //gold
+                    orderColor = "gold";
+                }
+                else if (orderCount < 20)
+                {
+                    //orange
+                    orderColor = "orange";
+                }
+                else if (orderCount < 40)
+                {
+                    //purple
+                    orderColor = "purple";
+
+                }
+                else if (orderCount < 60)
+                {
+                    //blue
+                    orderColor = "blue";
+                }
+                else if (orderCount < 80)
+                {
+                    //green
+                    orderColor = "green";
+                }
+                else
+                {
+                    //white
+                    orderColor = [222,222,222];
+                }
+
+                let marker = {
+                    type: "simple-marker",
+                    color: orderColor,
+                    width: 1
+                };
+
+                let mountain = new Graphic({
+                    geometry: point,
+                    symbol: marker
+                });
+
+                mountain.popupTemplate = {
+                    "title": "Peak Name: " + feature.properties.name,
+                    "content": feature.properties.description
+                };
+                
+                gLayer.add(mountain);
+                orderCount++;
+            }
+        }
+    };
+
+    xhttp.open("get", "wikipediaMountainPeaks.geojson", true);
+    xhttp.send();
+    ;
+    });
+
+    //because we want this to refresh, we will use
+    //some ajax
+
+    </script>
+    
+    <style>
+    body{
+    background-image: linear-radient(#222222,#333333);
+    font-family: Arial, Helvetica, sans-serif;
+    }
+
+    #body{
+    display: grid;
+    grid-auto-rows: minmax(750px, auto);
+    column-gap: 1rem;
+    row-gap:1rem;
+      grid-template-columns: 1fr;
+      grid-template-areas:
+      "box1"
+    }
+
+    #map {
+
+    padding: 5;
+    margin: 5;
+    height 100%;
+    width: 100%;
+    }
+    </style>
+</head>
+<body id="body">
+<section class="box1">
+<div id="map" style="width:100%;
+height: 100%;"> 
+</div>
+</section>
+</body>
